@@ -1,7 +1,7 @@
 export class ApiError extends Error {
-  statusCode: number;
-  success: boolean;
-  errors: any[];
+  public statusCode: number;
+  public success: boolean;
+  public errors: any[];
 
   constructor(
     statusCode: number,
@@ -21,3 +21,4 @@ export class ApiError extends Error {
     }
   }
 }
+export default ApiError;

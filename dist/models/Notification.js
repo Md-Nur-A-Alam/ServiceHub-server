@@ -36,6 +36,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Notification = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const NotificationSchema = new mongoose_1.Schema({
-    message: { type: String, required: true },
-});
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    type: { type: String, required: true, trim: true },
+    message: { type: String, required: true, trim: true },
+    link: { type: String, trim: true },
+    read: { type: Boolean, default: false },
+}, { timestamps: true });
 exports.Notification = mongoose_1.default.models.Notification || mongoose_1.default.model("Notification", NotificationSchema);
+exports.default = exports.Notification;

@@ -8,6 +8,8 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const v1_1 = __importDefault(require("./routes/v1"));
+const error_middleware_1 = __importDefault(require("./middlewares/error.middleware"));
+const ApiError_1 = __importDefault(require("./utils/ApiError"));
 const app = (0, express_1.default)();
 // Middlewares
 app.use((0, helmet_1.default)());
@@ -22,18 +24,12 @@ app.use((0, morgan_1.default)("dev"));
 app.get("/api/v1/health", (req, res) => {
     res.status(200).json({ status: "ok", message: "Service Hub Server is healthy" });
 });
+// Throwaway test route for error formatting verification
+app.get("/api/v1/test-error", (req, res) => {
+    throw new ApiError_1.default(400, "Test error format validation succeeded");
+});
 // Routes
 app.use("/api/v1", v1_1.default);
-// Centralized error handler
-app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(statusCode).json({
-        success: false,
-        error: {
-            code: statusCode,
-            message,
-        },
-    });
-});
+// Centralized error handler mounted last
+app.use(error_middleware_1.default);
 exports.default = app;

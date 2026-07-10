@@ -7,3 +7,4 @@ const asyncHandler = (requestHandler) => {
     };
 };
 exports.asyncHandler = asyncHandler;
+exports.default = exports.asyncHandler;

@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import v1Router from "./routes/v1";
+import errorHandler from "./middlewares/error.middleware";
+import ApiError from "./utils/ApiError";
 
 const app = express();
 
@@ -21,20 +23,15 @@ app.get("/api/v1/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok", message: "Service Hub Server is healthy" });
 });
 
+// Throwaway test route for error formatting verification
+app.get("/api/v1/test-error", (req: Request, res: Response) => {
+  throw new ApiError(400, "Test error format validation succeeded");
+});
+
 // Routes
 app.use("/api/v1", v1Router);
 
-// Centralized error handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(statusCode).json({
-    success: false,
-    error: {
-      code: statusCode,
-      message,
-    },
-  });
-});
+// Centralized error handler mounted last
+app.use(errorHandler);
 
 export default app;

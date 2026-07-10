@@ -16,3 +16,4 @@ class ApiError extends Error {
     }
 }
 exports.ApiError = ApiError;
+exports.default = ApiError;

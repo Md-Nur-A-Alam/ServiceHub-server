@@ -37,5 +37,18 @@ exports.Booking = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const BookingSchema = new mongoose_1.Schema({
     serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Service", required: true },
-});
+    customerId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    providerId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    date: { type: Date, required: true },
+    timeSlot: { type: String, required: true, trim: true },
+    status: {
+        type: String,
+        enum: ["pending", "confirmed", "completed", "cancelled"],
+        default: "pending",
+        index: true,
+    },
+    price: { type: Number, required: true, min: 0 },
+    notes: { type: String, trim: true },
+}, { timestamps: true });
 exports.Booking = mongoose_1.default.models.Booking || mongoose_1.default.model("Booking", BookingSchema);
+exports.default = exports.Booking;

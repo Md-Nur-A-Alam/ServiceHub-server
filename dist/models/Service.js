@@ -36,6 +36,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Service = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ServiceSchema = new mongoose_1.Schema({
-    title: { type: String, required: true },
-});
+    title: { type: String, required: true, trim: true },
+    shortDesc: { type: String, required: true, trim: true },
+    fullDesc: { type: String, required: true, trim: true },
+    images: [{ type: String }],
+    price: { type: Number, required: true, min: 0 },
+    category: { type: String, required: true, index: true, lowercase: true, trim: true },
+    location: { type: String, required: true, index: true, lowercase: true, trim: true },
+    providerId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    ratingAvg: { type: Number, default: 0, min: 0, max: 5 },
+    ratingCount: { type: Number, default: 0, min: 0 },
+    status: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
+        index: true,
+    },
+}, { timestamps: true });
 exports.Service = mongoose_1.default.models.Service || mongoose_1.default.model("Service", ServiceSchema);
+exports.default = exports.Service;

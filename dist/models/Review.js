@@ -36,6 +36,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Review = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ReviewSchema = new mongoose_1.Schema({
-    comment: { type: String, required: true },
-});
+    serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Service", required: true },
+    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, required: true, trim: true },
+    images: [{ type: String }],
+    providerReply: { type: String, trim: true },
+}, { timestamps: true });
 exports.Review = mongoose_1.default.models.Review || mongoose_1.default.model("Review", ReviewSchema);
+exports.default = exports.Review;
