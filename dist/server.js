@@ -27,3 +27,4 @@ async function bootstrap() {
     }
 }
 bootstrap();
+exports.default = app_1.default;
