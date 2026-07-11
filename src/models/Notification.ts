@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface INotification extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: string; // Better Auth user ID (string)
   type: string;
   message: string;
   link?: string;
@@ -12,7 +12,7 @@ export interface INotification extends Document {
 
 const NotificationSchema = new Schema<INotification>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    userId: { type: String, required: true, index: true }, // Better Auth string ID
     type: { type: String, required: true, trim: true },
     message: { type: String, required: true, trim: true },
     link: { type: String, trim: true },

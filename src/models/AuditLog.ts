@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAuditLog extends Document {
-  adminId: mongoose.Types.ObjectId;
+  adminId: string; // Better Auth user ID (string)
   action: string;
   targetType: string;
   targetId: string;
@@ -12,7 +12,7 @@ export interface IAuditLog extends Document {
 
 const AuditLogSchema = new Schema<IAuditLog>(
   {
-    adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    adminId: { type: String, required: true, index: true }, // Better Auth string ID
     action: { type: String, required: true, trim: true },
     targetType: { type: String, required: true, trim: true },
     targetId: { type: String, required: true, trim: true },

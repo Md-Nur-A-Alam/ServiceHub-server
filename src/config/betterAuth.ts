@@ -58,6 +58,26 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "customer",
       },
+      banned: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
+      providerBio: {
+        type: "string",
+        required: false,
+        defaultValue: "",
+      },
+      providerVerified: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+      },
+      savedServices: {
+        type: "string[]",
+        required: false,
+        defaultValue: [],
+      },
     },
   },
   databaseHooks: {

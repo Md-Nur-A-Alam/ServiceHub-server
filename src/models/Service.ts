@@ -8,7 +8,7 @@ export interface IService extends Document {
   price: number;
   category: string;
   location: string;
-  providerId: mongoose.Types.ObjectId;
+  providerId: string; // Better Auth user ID (string)
   ratingAvg: number;
   ratingCount: number;
   status: "pending" | "approved" | "rejected";
@@ -25,7 +25,7 @@ const ServiceSchema = new Schema<IService>(
     price: { type: Number, required: true, min: 0 },
     category: { type: String, required: true, index: true, lowercase: true, trim: true },
     location: { type: String, required: true, index: true, lowercase: true, trim: true },
-    providerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    providerId: { type: String, required: true, index: true }, // Better Auth string ID
     ratingAvg: { type: Number, default: 0, min: 0, max: 5 },
     ratingCount: { type: Number, default: 0, min: 0 },
     status: {
@@ -37,6 +37,11 @@ const ServiceSchema = new Schema<IService>(
   },
   { timestamps: true }
 );
+
+// Indexes for search and filtering
+ServiceSchema.index({ title: "text", shortDesc: "text" });
+ServiceSchema.index({ status: 1, category: 1 });
+ServiceSchema.index({ status: 1, location: 1 });
 
 export const Service = mongoose.models.Service || mongoose.model<IService>("Service", ServiceSchema);
 export default Service;

@@ -2,8 +2,8 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IBooking extends Document {
   serviceId: mongoose.Types.ObjectId;
-  customerId: mongoose.Types.ObjectId;
-  providerId: mongoose.Types.ObjectId;
+  customerId: string;  // Better Auth user ID (string)
+  providerId: string;  // Better Auth user ID (string)
   date: Date;
   timeSlot: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
@@ -16,8 +16,8 @@ export interface IBooking extends Document {
 const BookingSchema = new Schema<IBooking>(
   {
     serviceId: { type: Schema.Types.ObjectId, ref: "Service", required: true },
-    customerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    providerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    customerId: { type: String, required: true, index: true }, // Better Auth string ID
+    providerId: { type: String, required: true, index: true }, // Better Auth string ID
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true, trim: true },
     status: {
