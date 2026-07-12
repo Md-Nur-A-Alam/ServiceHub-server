@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Service from "../models/Service";
 import { userHelper } from "../utils/userHelper";
 
@@ -157,5 +157,77 @@ export const getServiceById = async (req: Request, res: Response): Promise<any> 
   } catch (error: any) {
     console.error("Error fetching service by ID:", error);
     return res.status(500).json({ success: false, message: "Server error fetching service details" });
+  }
+};
+
+export const createService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const { title, shortDesc, fullDesc, price, category, location, imageEmoji } = req.body;
+    const providerId = req.user.id;
+
+    if (req.user.role !== "provider" && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        error: { message: "Only service providers can create services." }
+      });
+    }
+
+    if (!title || !shortDesc || !fullDesc || !price || !category || !location) {
+      return res.status(400).json({
+        success: false,
+        error: { message: "Title, short/full description, price, category, and location are required." }
+      });
+    }
+
+    const service = new Service({
+      title,
+      shortDesc,
+      fullDesc,
+      price: Number(price),
+      category: category.toLowerCase().trim(),
+      location: location.toLowerCase().trim(),
+      providerId,
+      images: [imageEmoji || "🛠️"],
+      status: "pending"
+    });
+
+    await service.save();
+
+    res.status(201).json({
+      success: true,
+      data: service
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyServices = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const providerId = req.user.id;
+    const services = await Service.find({ providerId }).sort({ createdAt: -1 });
+
+    const formatted = services.map((service) => ({
+      id: service._id.toString(),
+      title: service.title,
+      shortDesc: service.shortDesc,
+      fullDesc: service.fullDesc,
+      providerId: service.providerId,
+      location: service.location,
+      price: service.price,
+      ratingAvg: service.ratingAvg,
+      ratingCount: service.ratingCount,
+      imageEmoji: service.images?.[0] || "🏠",
+      images: service.images || [],
+      status: service.status,
+      createdAt: service.createdAt
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formatted
+    });
+  } catch (error) {
+    next(error);
   }
 };

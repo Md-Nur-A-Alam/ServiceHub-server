@@ -13,12 +13,25 @@ import { connectRedis } from "./config/redis";
 
 const app = express();
 
-const clientOrigin = process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000";
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.CLIENT_PRODUCTION_URL,
+  process.env.CLIENT_URL
+].filter(Boolean) as string[];
 
 // Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: clientOrigin,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    if (origin.endsWith(".vercel.app") || origin.startsWith("http://localhost:")) {
+      return callback(null, true);
+    }
+    return callback(new Error("Blocked by CORS policy"));
+  },
   credentials: true,
 }));
 

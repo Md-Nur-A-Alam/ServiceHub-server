@@ -51,7 +51,7 @@ exports.auth = (0, better_auth_1.betterAuth)({
         },
     },
     trustedOrigins: [
-        process.env.PRODUCTION_URL || process.env.PORT_URL || process.env.CLIENT_URL || "http://localhost:3000",
+        process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000",
     ],
     user: {
         additionalFields: {

@@ -93,7 +93,7 @@ const createBooking = async (req, res, next) => {
           <p><strong>Customer:</strong> ${customerName}</p>
           <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
           <p><strong>Time Slot:</strong> ${timeSlot}</p>
-          <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/bookings">View Booking on ServiceHub</a>
+          <a href="${process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000"}/bookings">View Booking on ServiceHub</a>
         `
             });
         }
@@ -248,7 +248,7 @@ const updateBookingStatus = async (req, res, next) => {
           <p>Hi ${targetProfile.name},</p>
           <p>The status of your booking for <strong>${serviceTitle}</strong> has been updated to <strong>${booking.status.toUpperCase()}</strong>.</p>
           <p>${messageText}</p>
-          <a href="${process.env.CLIENT_URL || "http://localhost:3000"}/bookings">View Booking</a>
+          <a href="${process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000"}/bookings">View Booking</a>
         `
             });
         }

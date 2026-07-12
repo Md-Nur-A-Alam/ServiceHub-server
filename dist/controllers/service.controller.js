@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getServiceById = exports.getServices = void 0;
+exports.getMyServices = exports.createService = exports.getServiceById = exports.getServices = void 0;
 const Service_1 = __importDefault(require("../models/Service"));
 const userHelper_1 = require("../utils/userHelper");
 const getServices = async (req, res) => {
@@ -143,3 +143,70 @@ const getServiceById = async (req, res) => {
     }
 };
 exports.getServiceById = getServiceById;
+const createService = async (req, res, next) => {
+    try {
+        const { title, shortDesc, fullDesc, price, category, location, imageEmoji } = req.body;
+        const providerId = req.user.id;
+        if (req.user.role !== "provider" && req.user.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                error: { message: "Only service providers can create services." }
+            });
+        }
+        if (!title || !shortDesc || !fullDesc || !price || !category || !location) {
+            return res.status(400).json({
+                success: false,
+                error: { message: "Title, short/full description, price, category, and location are required." }
+            });
+        }
+        const service = new Service_1.default({
+            title,
+            shortDesc,
+            fullDesc,
+            price: Number(price),
+            category: category.toLowerCase().trim(),
+            location: location.toLowerCase().trim(),
+            providerId,
+            images: [imageEmoji || "🛠️"],
+            status: "pending"
+        });
+        await service.save();
+        res.status(201).json({
+            success: true,
+            data: service
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.createService = createService;
+const getMyServices = async (req, res, next) => {
+    try {
+        const providerId = req.user.id;
+        const services = await Service_1.default.find({ providerId }).sort({ createdAt: -1 });
+        const formatted = services.map((service) => ({
+            id: service._id.toString(),
+            title: service.title,
+            shortDesc: service.shortDesc,
+            fullDesc: service.fullDesc,
+            providerId: service.providerId,
+            location: service.location,
+            price: service.price,
+            ratingAvg: service.ratingAvg,
+            ratingCount: service.ratingCount,
+            imageEmoji: service.images?.[0] || "🏠",
+            images: service.images || [],
+            status: service.status,
+            createdAt: service.createdAt
+        }));
+        return res.status(200).json({
+            success: true,
+            data: formatted
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getMyServices = getMyServices;
