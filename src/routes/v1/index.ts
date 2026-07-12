@@ -6,6 +6,8 @@ import reviewRoutes from "./review.routes";
 import adminRoutes from "./admin.routes";
 import uploadRoutes from "./upload.routes";
 import userRoutes from "./user.routes";
+import paymentRoutes from "./payment.routes";
+import favoriteRoutes from "./favorite.routes";
 
 const router = Router();
 
@@ -16,5 +18,7 @@ router.use("/reviews", reviewRoutes);
 router.use("/admin", adminRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/users", userRoutes);
+router.use("/payments", paymentRoutes);
+router.use("/favorites", favoriteRoutes);
 
 export default router;

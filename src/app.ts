@@ -2,8 +2,6 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "./config/betterAuth";
 import authRateLimiter from "./middlewares/rateLimit.middleware";
 import v1Router from "./routes/v1";
 import errorHandler from "./middlewares/error.middleware";
@@ -55,7 +53,16 @@ app.use([
 ], authRateLimiter);
 
 // Better Auth handler - mounted BEFORE express.json()
-app.all("/api/auth/*splat", toNodeHandler(auth));
+app.all("/api/auth/*splat", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { toNodeHandler } = await import("better-auth/node");
+    const { getAuth } = await import("./config/betterAuth");
+    const auth = await getAuth();
+    return toNodeHandler(auth)(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

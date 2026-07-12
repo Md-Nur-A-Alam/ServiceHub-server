@@ -51,8 +51,12 @@ exports.auth = (0, better_auth_1.betterAuth)({
         },
     },
     trustedOrigins: [
-        process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000",
-    ],
+        "http://localhost:3000",
+        "https://service-hub-client-tawny.vercel.app",
+        "https://service-hub-client-git-main-nrd-nur-a-alarms-projects.vercel.app",
+        process.env.CLIENT_PRODUCTION_URL || "",
+        process.env.CLIENT_URL || "",
+    ].filter(Boolean),
     user: {
         additionalFields: {
             role: {
