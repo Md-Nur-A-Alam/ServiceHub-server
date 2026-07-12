@@ -120,3 +120,42 @@ export const getServices = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: "Server error fetching services" });
   }
 };
+
+export const getServiceById = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const id = req.params.id as string;
+    const service = await Service.findById(id).lean();
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+
+    const provider = await userHelper.findById(service.providerId);
+
+    const formatted = {
+      id: service._id,
+      title: service.title,
+      shortDesc: service.shortDesc,
+      fullDesc: service.fullDesc,
+      category: service.category,
+      providerId: service.providerId,
+      providerName: provider?.name || "Unknown Provider",
+      providerEmail: provider?.email || "",
+      providerBio: provider?.provider?.bio || "",
+      location: service.location,
+      price: service.price,
+      ratingAvg: service.ratingAvg,
+      ratingCount: service.ratingCount,
+      imageEmoji: service.images?.[0] || "🏠",
+      images: service.images || [],
+      status: service.status
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: formatted
+    });
+  } catch (error: any) {
+    console.error("Error fetching service by ID:", error);
+    return res.status(500).json({ success: false, message: "Server error fetching service details" });
+  }
+};

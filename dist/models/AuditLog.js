@@ -36,7 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuditLog = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const AuditLogSchema = new mongoose_1.Schema({
-    adminId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    adminId: { type: String, required: true, index: true }, // Better Auth string ID
     action: { type: String, required: true, trim: true },
     targetType: { type: String, required: true, trim: true },
     targetId: { type: String, required: true, trim: true },

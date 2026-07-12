@@ -37,8 +37,8 @@ exports.Booking = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const BookingSchema = new mongoose_1.Schema({
     serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Service", required: true },
-    customerId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
-    providerId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    customerId: { type: String, required: true, index: true }, // Better Auth string ID
+    providerId: { type: String, required: true, index: true }, // Better Auth string ID
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true, trim: true },
     status: {

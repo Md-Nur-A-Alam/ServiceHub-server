@@ -34,13 +34,14 @@ app.use(async (req, res, next) => {
     }
 });
 // Apply Rate Limiter to auth-adjacent routes BEFORE handling them
-app.use("/api/auth/sign-in*", rateLimit_middleware_1.default);
-app.use("/api/auth/sign-up*", rateLimit_middleware_1.default);
-app.use("/api/auth/forget-password*", rateLimit_middleware_1.default);
-app.use("/api/auth/reset-password*", rateLimit_middleware_1.default);
+app.use([
+    "/api/auth/sign-in/email",
+    "/api/auth/sign-up/email",
+    "/api/auth/request-password-reset",
+    "/api/auth/reset-password"
+], rateLimit_middleware_1.default);
 // Better Auth handler - mounted BEFORE express.json()
-app.all("/api/auth/*", (0, node_1.toNodeHandler)(betterAuth_1.auth));
-app.all("/api/auth/{*any}", (0, node_1.toNodeHandler)(betterAuth_1.auth));
+app.all("/api/auth/*splat", (0, node_1.toNodeHandler)(betterAuth_1.auth));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, morgan_1.default)("dev"));

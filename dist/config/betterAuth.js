@@ -60,6 +60,26 @@ exports.auth = (0, better_auth_1.betterAuth)({
                 required: false,
                 defaultValue: "customer",
             },
+            banned: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+            },
+            providerBio: {
+                type: "string",
+                required: false,
+                defaultValue: "",
+            },
+            providerVerified: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+            },
+            savedServices: {
+                type: "string[]",
+                required: false,
+                defaultValue: [],
+            },
         },
     },
     databaseHooks: {

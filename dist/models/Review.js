@@ -36,12 +36,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Review = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ReviewSchema = new mongoose_1.Schema({
-    serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Service", required: true },
-    userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    serviceId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Service", required: true, index: true },
+    userId: { type: String, required: true, index: true }, // Better Auth string ID
+    bookingId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Booking", required: true, index: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true, trim: true },
     images: [{ type: String }],
     providerReply: { type: String, trim: true },
 }, { timestamps: true });
+// Enforce one review per booking via a compound unique index
+ReviewSchema.index({ serviceId: 1, userId: 1, bookingId: 1 }, { unique: true });
 exports.Review = mongoose_1.default.models.Review || mongoose_1.default.model("Review", ReviewSchema);
 exports.default = exports.Review;
