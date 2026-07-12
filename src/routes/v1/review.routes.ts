@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createReview, replyToReview, getServiceReviews } from "../../controllers/review.controller";
+import { createReview, replyToReview, getServiceReviews, getMyReviews } from "../../controllers/review.controller";
 import { requireAuth } from "../../middlewares/auth.middleware";
 
 const router = Router();
@@ -8,7 +8,10 @@ const router = Router();
 router.get("/service/:serviceId", getServiceReviews);
 
 // Submitting reviews and replies require auth
-router.post("/", requireAuth, createReview);
-router.patch("/:id/reply", requireAuth, replyToReview);
+router.use(requireAuth);
+router.get("/user/me", getMyReviews);
+router.post("/", createReview);
+router.patch("/:id/reply", replyToReview);
 
 export default router;
+

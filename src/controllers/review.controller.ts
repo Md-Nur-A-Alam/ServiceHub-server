@@ -177,3 +177,51 @@ export const getServiceReviews = async (req: Request, res: Response, next: NextF
     next(error);
   }
 };
+
+export const getMyReviews = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    let reviews: any[] = [];
+
+    if (role === "customer") {
+      reviews = await Review.find({ userId }).sort({ createdAt: -1 }).lean();
+    } else if (role === "provider") {
+      const services = await Service.find({ providerId: userId }).select("_id").lean();
+      const serviceIds = services.map((s: any) => s._id);
+      reviews = await Review.find({ serviceId: { $in: serviceIds } }).sort({ createdAt: -1 }).lean();
+    } else if (role === "admin") {
+      reviews = await Review.find().sort({ createdAt: -1 }).lean();
+    } else {
+      return res.status(403).json({
+        success: false,
+        error: { message: "Invalid role." }
+      });
+    }
+
+    const userIds = Array.from(new Set(reviews.map((r: any) => r.userId)));
+    const serviceIds = Array.from(new Set(reviews.map((r: any) => r.serviceId)));
+
+    const [users, services] = await Promise.all([
+      userHelper.findManyByIds(userIds),
+      Service.find({ _id: { $in: serviceIds } }).select("title images").lean()
+    ]);
+
+    const userMap = new Map(users.map((u: any) => [u.id, u]));
+    const serviceMap = new Map(services.map((s: any) => [s._id.toString(), s]));
+
+    const formatted = reviews.map((r: any) => ({
+      ...r,
+      user: userMap.get(r.userId) || { name: "Anonymous", avatarUrl: null },
+      service: serviceMap.get(r.serviceId.toString()) || null
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formatted
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -202,32 +202,95 @@ export const createService = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getMyServices = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const getProviderServices = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const providerId = req.user.id;
-    const services = await Service.find({ providerId }).sort({ createdAt: -1 });
-
-    const formatted = services.map((service) => ({
-      id: service._id.toString(),
-      title: service.title,
-      shortDesc: service.shortDesc,
-      fullDesc: service.fullDesc,
-      providerId: service.providerId,
-      location: service.location,
-      price: service.price,
-      ratingAvg: service.ratingAvg,
-      ratingCount: service.ratingCount,
-      imageEmoji: service.images?.[0] || "🏠",
-      images: service.images || [],
-      status: service.status,
-      createdAt: service.createdAt
-    }));
-
-    return res.status(200).json({
+    const services = await Service.find({ providerId }).sort({ createdAt: -1 }).lean();
+    res.status(200).json({
       success: true,
-      data: formatted
+      data: services
     });
   } catch (error) {
     next(error);
   }
 };
+
+export const updateService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const providerId = req.user.id;
+    const service = await Service.findById(id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: { message: "Service not found." }
+      });
+    }
+
+    if (service.providerId !== providerId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        error: { message: "You are not authorized to update this service." }
+      });
+    }
+
+    const fields = ["title", "shortDesc", "fullDesc", "price", "category", "location", "images"];
+    fields.forEach((f) => {
+      if (req.body[f] !== undefined) {
+        if (f === "price") {
+          service.price = Number(req.body[f]);
+        } else {
+          (service as any)[f] = req.body[f];
+        }
+      }
+    });
+
+    // Reset status to pending on edit to allow moderation again if it was rejected or modified
+    if (service.status === "rejected") {
+      service.status = "pending";
+    }
+
+    await service.save();
+
+    res.status(200).json({
+      success: true,
+      data: service
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const providerId = req.user.id;
+    const service = await Service.findById(id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: { message: "Service not found." }
+      });
+    }
+
+    if (service.providerId !== providerId && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        error: { message: "You are not authorized to delete this service." }
+      });
+    }
+
+    await Service.deleteOne({ _id: id });
+
+    res.status(200).json({
+      success: true,
+      message: "Service deleted successfully."
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+

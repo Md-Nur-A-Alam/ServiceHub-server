@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getServiceReviews = exports.replyToReview = exports.createReview = void 0;
+exports.getMyReviews = exports.getServiceReviews = exports.replyToReview = exports.createReview = void 0;
 const Review_1 = __importDefault(require("../models/Review"));
 const Booking_1 = __importDefault(require("../models/Booking"));
 const Service_1 = __importDefault(require("../models/Service"));
@@ -163,3 +163,48 @@ const getServiceReviews = async (req, res, next) => {
     }
 };
 exports.getServiceReviews = getServiceReviews;
+const getMyReviews = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+        let reviews = [];
+        if (role === "customer") {
+            reviews = await Review_1.default.find({ userId }).sort({ createdAt: -1 }).lean();
+        }
+        else if (role === "provider") {
+            const services = await Service_1.default.find({ providerId: userId }).select("_id").lean();
+            const serviceIds = services.map((s) => s._id);
+            reviews = await Review_1.default.find({ serviceId: { $in: serviceIds } }).sort({ createdAt: -1 }).lean();
+        }
+        else if (role === "admin") {
+            reviews = await Review_1.default.find().sort({ createdAt: -1 }).lean();
+        }
+        else {
+            return res.status(403).json({
+                success: false,
+                error: { message: "Invalid role." }
+            });
+        }
+        const userIds = Array.from(new Set(reviews.map((r) => r.userId)));
+        const serviceIds = Array.from(new Set(reviews.map((r) => r.serviceId)));
+        const [users, services] = await Promise.all([
+            userHelper_1.userHelper.findManyByIds(userIds),
+            Service_1.default.find({ _id: { $in: serviceIds } }).select("title images").lean()
+        ]);
+        const userMap = new Map(users.map((u) => [u.id, u]));
+        const serviceMap = new Map(services.map((s) => [s._id.toString(), s]));
+        const formatted = reviews.map((r) => ({
+            ...r,
+            user: userMap.get(r.userId) || { name: "Anonymous", avatarUrl: null },
+            service: serviceMap.get(r.serviceId.toString()) || null
+        }));
+        res.status(200).json({
+            success: true,
+            data: formatted
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getMyReviews = getMyReviews;

@@ -7,6 +7,8 @@ const router = (0, express_1.Router)();
 // GET reviews of a service is public
 router.get("/service/:serviceId", review_controller_1.getServiceReviews);
 // Submitting reviews and replies require auth
-router.post("/", auth_middleware_1.requireAuth, review_controller_1.createReview);
-router.patch("/:id/reply", auth_middleware_1.requireAuth, review_controller_1.replyToReview);
+router.use(auth_middleware_1.requireAuth);
+router.get("/user/me", review_controller_1.getMyReviews);
+router.post("/", review_controller_1.createReview);
+router.patch("/:id/reply", review_controller_1.replyToReview);
 exports.default = router;
