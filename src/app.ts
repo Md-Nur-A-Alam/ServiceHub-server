@@ -13,10 +13,12 @@ import { connectRedis } from "./config/redis";
 
 const app = express();
 
+const clientOrigin = process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000";
+
 // Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: clientOrigin,
   credentials: true,
 }));
 

@@ -49,7 +49,7 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: [
-    process.env.CLIENT_URL || "http://localhost:3000",
+    process.env.CLIENT_PRODUCTION_URL || process.env.CLIENT_URL || "http://localhost:3000",
   ],
   user: {
     additionalFields: {

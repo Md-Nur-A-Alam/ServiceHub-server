@@ -16,10 +16,11 @@ const ApiError_1 = __importDefault(require("./utils/ApiError"));
 const db_1 = require("./config/db");
 const redis_1 = require("./config/redis");
 const app = (0, express_1.default)();
+const clientOrigin = process.env.PRODUCTION_URL || process.env.PORT_URL || process.env.CLIENT_URL || "http://localhost:3000";
 // Middlewares
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: clientOrigin,
     credentials: true,
 }));
 // Serverless-safe Database & Redis initialization middleware
