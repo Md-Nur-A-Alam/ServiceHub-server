@@ -68,6 +68,9 @@ if (false) {
   require.resolve("better-auth/node");
 }
 
+// Stripe webhook must be parsed as raw buffer
+app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));

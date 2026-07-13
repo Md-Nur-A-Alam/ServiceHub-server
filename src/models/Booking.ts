@@ -8,6 +8,7 @@ export interface IBooking extends Document {
   timeSlot: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   price: number;
+  paymentIntentId?: string;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +28,7 @@ const BookingSchema = new Schema<IBooking>(
       index: true,
     },
     price: { type: Number, required: true, min: 0 },
+    paymentIntentId: { type: String, index: true },
     notes: { type: String, trim: true },
   },
   { timestamps: true }
