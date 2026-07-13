@@ -10,6 +10,7 @@ export const getAuth = async () => {
   const { mongodbAdapter } = await import("@better-auth/mongo-adapter");
 
   authInstance = betterAuth({
+    baseURL: process.env.BETTER_AUTH_URL || process.env.SERVER_URL,
     database: mongodbAdapter(db),
     emailAndPassword: {
       enabled: true,
