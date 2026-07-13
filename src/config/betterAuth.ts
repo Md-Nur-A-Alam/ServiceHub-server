@@ -1,5 +1,10 @@
 import { db } from "./mongo-client";
 import { sendEmail } from "../services/email.service";
+// NFT trace hints for Vercel
+if (false) {
+  require.resolve("better-auth");
+  require.resolve("@better-auth/mongo-adapter");
+}
 
 let authInstance: any = null;
 

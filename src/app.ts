@@ -63,6 +63,11 @@ app.all("/api/auth/*splat", async (req: Request, res: Response, next: NextFuncti
   }
 });
 
+// NFT trace hints for Vercel
+if (false) {
+  require.resolve("better-auth/node");
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
