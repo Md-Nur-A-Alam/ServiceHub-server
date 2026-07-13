@@ -55,10 +55,6 @@ export const getAuth = async () => {
       },
     },
     trustedOrigins: [
-      "http://localhost:3000",
-      "https://service-hub-client-tawny.vercel.app",
-      "https://service-hub-client-git-main-nrd-nur-a-alarms-projects.vercel.app",
-      process.env.CLIENT_PRODUCTION_URL || "",
       process.env.CLIENT_URL || "",
     ].filter(Boolean),
     user: {
