@@ -53,7 +53,8 @@ app.use([
 // Better Auth handler - mounted BEFORE express.json()
 app.all("/api/auth/*splat", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { toNodeHandler } = await import("better-auth/node");
+    const _importDynamic = new Function('modulePath', 'return import(modulePath)');
+    const { toNodeHandler } = await _importDynamic("better-auth/node");
     const { getAuth } = await import("./config/betterAuth");
     const auth = await getAuth();
     return toNodeHandler(auth)(req, res);

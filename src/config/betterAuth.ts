@@ -6,8 +6,9 @@ let authInstance: any = null;
 export const getAuth = async () => {
   if (authInstance) return authInstance;
 
-  const { betterAuth } = await import("better-auth");
-  const { mongodbAdapter } = await import("@better-auth/mongo-adapter");
+  const _importDynamic = new Function('modulePath', 'return import(modulePath)');
+  const { betterAuth } = await _importDynamic("better-auth");
+  const { mongodbAdapter } = await _importDynamic("@better-auth/mongo-adapter");
 
   authInstance = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || process.env.SERVER_URL,
