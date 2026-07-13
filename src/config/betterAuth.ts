@@ -15,30 +15,38 @@ export const getAuth = async () => {
       enabled: true,
       async sendVerificationEmail(data: any) {
         const verificationUrl = `${process.env.BETTER_AUTH_URL}/api/auth/verify-email?token=${data.token}&callbackURL=${process.env.CLIENT_URL}`;
-        await sendEmail({
-          to: data.user.email,
-          subject: "Verify your ServiceHub account",
-          html: `
-            <h3>Welcome to ServiceHub</h3>
-            <p>Hi ${data.user.name},</p>
-            <p>Please verify your email address by clicking the link below:</p>
-            <a href="${verificationUrl}">${verificationUrl}</a>
-          `,
-        });
+        try {
+          await sendEmail({
+            to: data.user.email,
+            subject: "Verify your ServiceHub account",
+            html: `
+              <h3>Welcome to ServiceHub</h3>
+              <p>Hi ${data.user.name},</p>
+              <p>Please verify your email address by clicking the link below:</p>
+              <a href="${verificationUrl}">${verificationUrl}</a>
+            `,
+          });
+        } catch (error) {
+          console.error("Failed to send verification email:", error);
+        }
       },
       async sendResetPassword(data: any) {
         const resetUrl = `${process.env.CLIENT_URL}/reset-password/${data.token}`;
-        await sendEmail({
-          to: data.user.email,
-          subject: "Reset your ServiceHub password",
-          html: `
-            <h3>Reset Password</h3>
-            <p>Hi ${data.user.name},</p>
-            <p>You requested a password reset. Please click the link below to set a new password:</p>
-            <a href="${resetUrl}">${resetUrl}</a>
-            <p>If you did not request this, you can safely ignore this email.</p>
-          `,
-        });
+        try {
+          await sendEmail({
+            to: data.user.email,
+            subject: "Reset your ServiceHub password",
+            html: `
+              <h3>Reset Password</h3>
+              <p>Hi ${data.user.name},</p>
+              <p>You requested a password reset. Please click the link below to set a new password:</p>
+              <a href="${resetUrl}">${resetUrl}</a>
+              <p>If you did not request this, you can safely ignore this email.</p>
+            `,
+          });
+        } catch (error) {
+          console.error("Failed to send password reset email:", error);
+        }
       },
     },
     socialProviders: {

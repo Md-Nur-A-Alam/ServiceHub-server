@@ -20,6 +20,9 @@ async function getTransporter() {
     console.log("[Email]: Configured transporter using SMTP environment variables.");
   } else {
     try {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Skipping Ethereal in production (Vercel blocks outbound SMTP port 587)");
+      }
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
         host: "smtp.ethereal.email",
