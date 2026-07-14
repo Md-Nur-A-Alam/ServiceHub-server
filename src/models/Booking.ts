@@ -34,5 +34,9 @@ const BookingSchema = new Schema<IBooking>(
   { timestamps: true }
 );
 
+// Compound indexes for scalable dashboard queries
+BookingSchema.index({ providerId: 1, status: 1 });
+BookingSchema.index({ customerId: 1, date: -1 });
+
 export const Booking = mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema);
 export default Booking;

@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { db } from "../config/mongo-client";
 
 export interface UserProfile {
@@ -19,7 +20,8 @@ export const userHelper = {
    * Find a user by their Better Auth ID
    */
   async findById(id: string): Promise<UserProfile | null> {
-    const userDoc = await db.collection("user").findOne({ _id: id as any });
+    const queryId = ObjectId.isValid(id) ? new ObjectId(id) : id;
+    const userDoc = await db.collection("user").findOne({ _id: queryId as any });
     if (!userDoc) return null;
     return this.mapUserDoc(userDoc);
   },
@@ -37,7 +39,8 @@ export const userHelper = {
    * Find multiple users by their IDs
    */
   async findManyByIds(ids: string[]): Promise<UserProfile[]> {
-    const docs = await db.collection("user").find({ _id: { $in: ids as any } }).toArray();
+    const queryIds = ids.map(id => ObjectId.isValid(id) ? new ObjectId(id) : id);
+    const docs = await db.collection("user").find({ _id: { $in: queryIds as any } }).toArray();
     return docs.map(doc => this.mapUserDoc(doc));
   },
 
@@ -62,8 +65,9 @@ export const userHelper = {
 
     if (Object.keys(updatePayload).length === 0) return true;
 
+    const queryId = ObjectId.isValid(id) ? new ObjectId(id) : id;
     const result = await db.collection("user").updateOne(
-      { _id: id as any },
+      { _id: queryId as any },
       { $set: updatePayload }
     );
     return result.modifiedCount > 0;
@@ -74,7 +78,7 @@ export const userHelper = {
    */
   mapUserDoc(doc: any): UserProfile {
     return {
-      id: doc._id || doc.id,
+      id: doc._id?.toString() || doc.id?.toString(),
       name: doc.name,
       email: doc.email,
       avatarUrl: doc.image || undefined,

@@ -6,7 +6,16 @@ import { userHelper } from "../utils/userHelper";
 import { notificationService } from "../services/notification.service";
 import { sendEmail } from "../services/email.service";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
+import mongoose from "mongoose";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("CRITICAL: STRIPE_SECRET_KEY is not defined in the environment variables.");
+}
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  console.warn("WARNING: STRIPE_WEBHOOK_SECRET is not defined. Webhooks will fail verification.");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2026-06-24.dahlia" as any,
 });
 
@@ -60,7 +69,10 @@ export const createPaymentIntent = async (req: Request, res: Response): Promise<
 
 export const stripeWebhook = async (req: Request, res: Response): Promise<any> => {
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_dummy";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return res.status(500).send("Webhook Error: Webhook secret not configured in .env");
+  }
 
   let event: Stripe.Event;
 
@@ -82,45 +94,59 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<any> =
           // Check if already created (webhook idempotency)
           const existing = await Booking.findOne({ paymentIntentId: paymentIntent.id });
           if (!existing) {
-            const booking = new Booking({
-              serviceId: metadata.serviceId,
-              customerId: metadata.customerId,
-              providerId: service.providerId,
-              date: new Date(metadata.date),
-              timeSlot: metadata.timeSlot,
-              price: service.price,
-              notes: metadata.notes,
-              status: "pending",
-              paymentIntentId: paymentIntent.id
-            });
-            await booking.save();
-
-            // Trigger notifications
-            const providerProfile = await userHelper.findById(service.providerId);
-            const customerProfile = await userHelper.findById(metadata.customerId);
-            const customerName = customerProfile?.name || "A customer";
+            const session = await mongoose.startSession();
+            session.startTransaction();
             
-            await notificationService.sendNotification({
-              userId: service.providerId,
-              type: "booking_created",
-              message: `${customerName} booked "${service.title}" and paid securely.`,
-              link: `/bookings`
-            });
-
-            if (providerProfile?.email) {
-              await sendEmail({
-                to: providerProfile.email,
-                subject: `New Secure Booking Request for ${service.title}`,
-                html: `
-                  <h3>New Booking Request</h3>
-                  <p>Hi ${providerProfile.name},</p>
-                  <p>You have a new paid booking request for <strong>${service.title}</strong>.</p>
-                  <p><strong>Customer:</strong> ${customerName}</p>
-                  <p><strong>Date:</strong> ${new Date(metadata.date).toLocaleDateString()}</p>
-                  <p><strong>Time Slot:</strong> ${metadata.timeSlot}</p>
-                  <a href="${process.env.CLIENT_URL}/bookings">View Booking on ServiceHub</a>
-                `
+            try {
+              const booking = new Booking({
+                serviceId: metadata.serviceId,
+                customerId: metadata.customerId,
+                providerId: service.providerId,
+                date: new Date(metadata.date),
+                timeSlot: metadata.timeSlot,
+                price: service.price,
+                notes: metadata.notes,
+                status: "pending",
+                paymentIntentId: paymentIntent.id
               });
+              
+              await booking.save({ session });
+
+              // Trigger notifications
+              const providerProfile = await userHelper.findById(service.providerId);
+              const customerProfile = await userHelper.findById(metadata.customerId);
+              const customerName = customerProfile?.name || "A customer";
+              
+              await notificationService.sendNotification({
+                userId: service.providerId,
+                type: "booking_created",
+                message: `${customerName} booked "${service.title}" and paid securely.`,
+                link: `/bookings`
+              });
+
+              if (providerProfile?.email) {
+                await sendEmail({
+                  to: providerProfile.email,
+                  subject: `New Secure Booking Request for ${service.title}`,
+                  html: `
+                    <h3>New Booking Request</h3>
+                    <p>Hi ${providerProfile.name},</p>
+                    <p>You have a new paid booking request for <strong>${service.title}</strong>.</p>
+                    <p><strong>Customer:</strong> ${customerName}</p>
+                    <p><strong>Date:</strong> ${new Date(metadata.date).toLocaleDateString()}</p>
+                    <p><strong>Time Slot:</strong> ${metadata.timeSlot}</p>
+                    <a href="${process.env.CLIENT_URL}/bookings">View Booking on ServiceHub</a>
+                  `
+                });
+              }
+              
+              await session.commitTransaction();
+            } catch (transactionError) {
+              await session.abortTransaction();
+              console.error("Transaction aborted:", transactionError);
+              throw transactionError;
+            } finally {
+              session.endSession();
             }
           }
         }
