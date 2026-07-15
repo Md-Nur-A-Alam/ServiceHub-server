@@ -23,7 +23,7 @@ async function bootstrap() {
     console.log("[Server]: Initializing bootstrap sequence...");
     // Connect to database
     await connectDB();
-    
+
     // Connect to Redis
     await connectRedis();
 
@@ -39,11 +39,5 @@ async function bootstrap() {
 if (!process.env.VERCEL) {
   bootstrap();
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export default app;
