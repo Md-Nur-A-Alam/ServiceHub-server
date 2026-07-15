@@ -40,4 +40,10 @@ if (!process.env.VERCEL) {
   bootstrap();
 }
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default app;
