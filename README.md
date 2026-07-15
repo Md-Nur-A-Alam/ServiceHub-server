@@ -1,226 +1,204 @@
-# ServiceHub Server
+<div align="center">
+  <h1>⚙️ ServiceHub Server</h1>
+  <p><b>The robust Express.js API backend powering the ServiceHub marketplace.</b></p>
+  <p><i>Because a gorgeous frontend without a backend is just a really pretty picture. 🖼️</i></p>
 
-> The robust Express.js API backend powering the ServiceHub marketplace.
+  ![Node.js](https://img.shields.io/badge/Node.js-26.1-green.svg?style=for-the-badge&logo=node.js)
+  ![Express](https://img.shields.io/badge/Express-5.2.1-lightgrey.svg?style=for-the-badge&logo=express)
+  ![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg?style=for-the-badge&logo=typescript)
+  ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248.svg?style=for-the-badge&logo=mongodb)
+</div>
 
-![Node.js](https://img.shields.io/badge/Node.js-26.1-green.svg)
-![Express](https://img.shields.io/badge/Express-5.2.1-lightgrey.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)
-![License](https://img.shields.io/badge/License-ISC-blue.svg)
+---
 
-## Links & Demo Credentials
+## 🔗 Links & Demo Credentials
+Frontend getting all the glory? The backend does the heavy lifting. Test it out!
 
-- **Live Website:** [ServiceHub](https://service-hub-client-tawny.vercel.app)
-- **Frontend Repository:** [ServiceHub-client](https://github.com/Md-Nur-A-Alam/ServiceHub-client)
-- **Backend Repository:** [ServiceHub-server](https://github.com/Md-Nur-A-Alam/ServiceHub-server)
+- 🌍 **Live Website:** [ServiceHub Frontend](https://service-hub-client-tawny.vercel.app)
+- 🗄️ **Backend Repo:** [ServiceHub-server](https://github.com/Md-Nur-A-Alam/ServiceHub-server)
+- 💻 **Frontend Repo:** [ServiceHub-client](https://github.com/Md-Nur-A-Alam/ServiceHub-client)
 
-### Demo Credentials (Customer)
-- **Email:** `customer@gmail.com`
-- **Password:** `Customer@123`
+> **🔑 Magic Keys (Demo Customer)**  
+> **Email:** `customer@gmail.com`  
+> **Password:** `Customer@123`
 
-## Overview
-ServiceHub Server is a scalable RESTful API built with Express and TypeScript. It serves as the backend engine for the ServiceHub client, handling core business logic, data persistence via MongoDB/Mongoose, robust authentication using Better Auth, and realtime event dispatching. 
+---
 
-## Table of Contents
-- [Overview](#overview)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Folder Structure](#folder-structure)
-- [Authentication](#authentication)
-- [API Reference](#api-reference)
-- [Database Schema](#database-schema)
-- [Rate Limiting & Security](#rate-limiting--security)
-- [Getting Started](#getting-started)
-- [Available Scripts](#available-scripts)
-- [Deployment](#deployment)
-- [License & Author](#license--author)
+## 🌟 Top Features & Highlights
+The ServiceHub Server is built for scale, security, and developer sanity. Here are the core modules running the show:
 
-## Tech Stack
+<details>
+<summary><b>🔐 Impenetrable Role-Based Access Control (RBAC)</b></summary>
+<p>
+We implemented a strict, unified middleware pipeline utilizing Better Auth. Before any request touches a sensitive controller, our RBAC middleware dynamically verifies session cookies, cross-references user roles (Admin vs Provider vs Customer), and rejects unauthorized mutations with standardized HTTP 403 errors.
+</p>
+</details>
 
-| Category | Technology | Purpose |
+<details>
+<summary><b>🛡️ Rock-Solid Input Validation</b></summary>
+<p>
+Never trust the client. We use `Joi` validation schemas acting as a firewall on every single `POST`, `PUT`, and `PATCH` request. Invalid data shapes, missing fields, or weirdly formatted emails never even reach the database layer.
+</p>
+</details>
+
+<details>
+<summary><b>📡 Real-time Event Dispatcher</b></summary>
+<p>
+Pusher is tightly integrated into the core lifecycle. The moment a Mongoose transaction for a Booking updates from "pending" to "confirmed", an event is published to a secure WebSocket channel, instantly updating the relevant client UI.
+</p>
+</details>
+
+<details>
+<summary><b>🚀 Centralized Error Envelope</b></summary>
+<p>
+We created a custom `ApiError` class caught by a global error handler. Whether it's a Mongoose casting error, a JWT expiration, or a 404, the API guarantees a consistent JSON error envelope response shape, making frontend parsing extremely predictable.
+</p>
+</details>
+
+---
+
+## 🧠 Engineering Marvels (How We Solved the TRICKY Stuff)
+
+Backend development is full of gotchas. Here are the specific, tricky issues we resolved during development:
+
+> **🛑 The Problem: Serverless Database Connection Drops**
+> *When deploying an Express app to serverless environments (like Vercel), cold starts and ephemeral instances mean standard "connect once on app boot" MongoDB strategies lead to dropped connections and timeouts.*
+> 
+> **✅ The Solution: Just-In-Time Connection Middleware**
+> We bypassed standard bootstrapping and implemented a `Serverless-safe Database & Redis initialization middleware`. On every incoming request, it checks if a cached connection exists before proceeding. If a cold start occurs, it guarantees the DB and Upstash Redis are connected *before* `next()` is called.
+
+> **🛑 The Problem: Better Auth + Express JSON Body Parser Conflicts**
+> *Better Auth expects raw requests to handle its own form-data parsing, but standard Express setups globally mount `express.json()`, completely destroying the payload before Better Auth can read it.*
+>
+> **✅ The Solution: Strategic Route Mounting & Dynamic Imports**
+> We mounted `app.all("/api/auth/*splat")` strictly **BEFORE** `express.json()`. Furthermore, we utilized `Function('modulePath', 'return import(modulePath)')` for a dynamic ESM import of `better-auth/node` to bypass strict CommonJS/ESM interop bundling issues in edge environments.
+
+> **🛑 The Problem: Stripe Webhook Signature Verification**
+> *Stripe requires the raw unparsed HTTP request buffer to verify webhook cryptographic signatures, but our API uses JSON.*
+>
+> **✅ The Solution: Targeted Raw Buffering**
+> We added a specific line: `app.use("/api/v1/payments/webhook", express.raw({ type: "application/json" }));` right before the global JSON parser. This carves out an exception exclusively for Stripe.
+
+---
+
+## 🔌 API Endpoints & Protection Visuals
+*We test our endpoints so you don't have to experience 500 Internal Server Errors.*
+
+<details>
+<summary><b>🛡️ Click to reveal: Review and Admin Analytics Protection</b></summary>
+<br>
+<img src="Assets/review_and_admin_analytics_protection.png" alt="Admin Analytics" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+</details>
+
+<details>
+<summary><b>📅 Click to reveal: Service and Bookings Endpoints</b></summary>
+<br>
+<img src="Assets/service_and_bookings_endpoints.png" alt="Bookings Endpoints" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+</details>
+
+### Interactive API Reference
+All APIs live under `/api/v1`. 
+
+<details>
+<summary><b>📖 Click to Expand the Route Map</b></summary>
+
+| Resource | Base Endpoint | What happens here? |
 | :--- | :--- | :--- |
-| **Framework** | Express 5.2 | High-performance Node.js web application framework. |
-| **Language** | TypeScript | Static typing and modern language features. |
-| **Database** | MongoDB & Mongoose | NoSQL database and Object Data Modeling (ODM) library. |
-| **Authentication** | Better Auth | End-to-end authentication handling with role-based access. |
-| **Validation** | Joi | Schema description language and data validator for API payloads. |
-| **Security** | Helmet & CORS | HTTP header security and Cross-Origin Resource Sharing. |
-| **Realtime** | Pusher | Server-side event publishing for realtime client updates. |
-| **Payments** | Stripe | Payment processing integration and webhook handling. |
-| **Cache/Session** | Upstash Redis | Fast in-memory data store. |
+| **Auth** | `/api/auth/*` | Handled by Better Auth. Sessions, OAuth, Magic. |
+| **Services** | `/api/v1/services` | The marketplace listings. |
+| **Bookings** | `/api/v1/bookings` | Appointments and scheduling. |
+| **Reviews** | `/api/v1/reviews` | Constructive criticism & 5-star praises. |
+| **Users** | `/api/v1/users` | Profile data. |
+| **Payments** | `/api/v1/payments` | Stripe webhooks (show me the money). 💰 |
+| **Favorites** | `/api/v1/favorites` | Saved items. |
+| **Admin** | `/api/v1/admin` | Dashboard analytics & god-mode overrides. 👑 |
 
-## Architecture
+</details>
 
-The server utilizes a layered architecture ensuring separation of concerns:
+---
+
+## 🏗️ Architecture Visualization
+
+A highly choreographed dance of requests, middlewares, and controllers.
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Server (Express)
-    participant RateLimiter
-    participant BetterAuth
-    participant Controller
-    participant MongoDB
+    participant C as 🌐 Client
+    participant E as 🚀 Express Server
+    participant B as 🔐 BetterAuth
+    participant DB as 🍃 MongoDB
 
-    Client->>Server (Express): HTTP Request
-    Server (Express)->>Server (Express): Helmet / CORS Middleware
-    Server (Express)->>RateLimiter: Check Limits (Auth routes)
-    Server (Express)->>BetterAuth: Authenticate Request
-    BetterAuth-->>Server (Express): Session Context
-    Server (Express)->>Controller: Route to Controller
-    Controller->>MongoDB: Query / Mutation
-    MongoDB-->>Controller: Data
-    Controller-->>Client: Standard JSON Response
+    C->>E: "Let me in!" (HTTP Request)
+    Note over E: Helmet & CORS stand guard
+    E->>E: Check Rate Limits 🛑
+    E->>B: "Is this guy legit?"
+    B-->>E: "Yep, here's their session."
+    E->>DB: Query / Mutation
+    DB-->>E: Data Payload
+    E-->>C: 🎁 Standard JSON Response
 ```
 
-**Standard Response Envelope**
-All successful API responses follow a consistent format to ensure predictable client integrations. Errors are intercepted by a centralized error handler.
+---
 
-## Folder Structure
+## 🗃️ Database Schema
 
-```text
-src/
-├── config/         # Database, Redis, and Better Auth configuration
-├── controllers/    # Request handlers and business logic coordination
-├── middlewares/    # Custom middlewares (auth, RBAC, error, rate-limit, upload)
-├── models/         # Mongoose schemas and database models
-├── routes/         # Express route definitions grouped by resource (v1)
-├── services/       # Reusable business logic and external integrations
-├── utils/          # Helper functions and custom error classes
-└── validators/     # Joi validation schemas for request bodies
-```
+We use Mongoose schemas to keep our NoSQL slightly structured. *(Note: `User` is handled natively by Better Auth!)*
 
-## Authentication
+- **Service:** The things people buy (Title, price, provider ID, status).
+- **Booking:** The transactions (Who, what, when, and payment intent).
+- **Review:** The aftermath (Ratings and text).
+- **Favorite:** Bookmarks for later.
+- **AuditLog:** The *"Who did what and when"* tracker.
+- **Notification:** Pinging users directly in the DB.
 
-Authentication is fully managed by **Better Auth** mounted directly at `/api/auth/*`. 
+---
 
-Supported strategies include:
-- Email/Password combination
-- Google OAuth
+## 🔒 Security & Rate Limiting
 
-Authentication utilizes a secure session/cookie strategy. Protected routes are guarded by RBAC (Role-Based Access Control) middlewares that verify the session cookie.
+- **Helmet:** Giving our Express app a helmet to protect against web vulnerabilities.
+- **CORS:** We only talk to strangers we know (`CLIENT_URL` and `localhost`).
+- **Rate Limiting:** `express-rate-limit` prevents brute-forcing on `/api/auth` routes. Stop trying to guess passwords!
+- **Joi Validation:** If your JSON body doesn't match the schema, Joi sends you packing.
 
-**Example Request:**
-```javascript
-// Fetching a protected resource using credentials
-fetch("http://localhost:8000/api/v1/users/profile", {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  credentials: "true" // Crucial for sending the Better Auth session cookie
-})
-.then(res => res.json())
-.then(data => console.log(data));
-```
+---
 
-## API Reference & Endpoints Visuals
+## 🚀 Run It Yourself (Getting Started)
 
-Here is an overview of the protected and public endpoints tested:
+<details>
+<summary><b>⚙️ Server Ignition Sequence</b></summary>
 
-![Service and Bookings Endpoints](Assets/service_and_bookings_endpoints.png)
-
-![Review and Admin Analytics Protection](Assets/review_and_admin_analytics_protection.png)
-
-The API is versioned under `/api/v1`. 
-
-| Resource | Base Endpoint | Description |
-| :--- | :--- | :--- |
-| **Auth** | `/api/auth/*` | Handled by Better Auth (sign-in, sign-up, sessions). |
-| **Services** | `/api/v1/services` | CRUD operations for service listings. |
-| **Bookings** | `/api/v1/bookings` | Booking creation, status updates, and retrieval. |
-| **Reviews** | `/api/v1/reviews` | Customer ratings and reviews for services. |
-| **Users** | `/api/v1/users` | Profile management and user data retrieval. |
-| **Payments** | `/api/v1/payments` | Stripe payment intents and webhooks. |
-| **Favorites** | `/api/v1/favorites` | Customer saved/favorite services. |
-| **Admin** | `/api/v1/admin` | Administrative overrides and analytics. |
-| **Upload** | `/api/v1/upload` | File/image uploading routes. |
-
-## Database Schema
-
-The database utilizes Mongoose for schema definitions. (Note: The `User` collection is managed natively by Better Auth).
-
-- **Service**: (`src/models/Service.ts`) - Details for a service listing, including title, descriptions, price, category, status (`pending`, `approved`, `rejected`), and provider ID.
-- **Booking**: (`src/models/Booking.ts`) - Represents a transaction, storing `serviceId`, `customerId`, `providerId`, dates, time slots, payment tracking, and status (`pending`, `confirmed`, `completed`, `cancelled`).
-- **Review**: (`src/models/Review.ts`) - Ratings and text feedback associated with a service and author.
-- **Favorite**: (`src/models/Favorite.ts`) - Maps a user to a favorited service.
-- **AuditLog**: (`src/models/AuditLog.ts`) - System logging for tracking critical actions and state changes.
-- **Notification**: (`src/models/Notification.ts`) - In-app notification records for users.
-
-## Rate Limiting & Security
-
-- **Helmet**: Secures Express apps by setting various HTTP headers.
-- **CORS**: Strictly configured to allow origins defined in `process.env.CLIENT_URL` and `localhost`/Vercel preview environments.
-- **Rate Limiting**: `express-rate-limit` is applied specifically to sensitive authentication endpoints (`/api/auth/sign-in/email`, `/api/auth/sign-up/email`, `/api/auth/request-password-reset`) before processing.
-- **Input Validation**: `Joi` is utilized across controllers to validate all incoming request bodies and parameters.
-
-## Realtime Events
-
-The server utilizes `pusher` to broadcast realtime events, enabling the client application to react instantly to state changes. Primary event streams include booking status updates and new notifications, allowing providers and customers to maintain synchronization without manual polling.
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v26.1.x)
-- MongoDB running locally or a MongoDB Atlas URI
-- Redis (via Upstash or local)
-
-### Installation
-
-1. Clone the repository:
+1. **Clone the repo:**
    ```bash
-   git clone https://github.com/yourusername/service-hub-server.git
+   git clone https://github.com/Md-Nur-A-Alam/ServiceHub-server.git
    cd service-hub-server
    ```
 
-2. Install dependencies:
+2. **Install the node_modules black hole:**
    ```bash
    npm install
    ```
 
-3. Environment Variables:
-   Copy `.env.example` to `.env` and fill in the necessary keys.
+3. **Environment Variables:**
+   Copy `.env.example` to `.env` and provide the keys to the kingdom. (MongoDB URI, Better Auth secrets, Stripe Keys, Upstash Redis).
 
-### Environment Variables
+4. **Fire it up:**
+   ```bash
+   npm run dev
+   ```
+   *Listening intently on `http://localhost:8000`...*
+</details>
 
-| Variable | Description | Required | Example |
-| :--- | :--- | :--- | :--- |
-| `MONGODB_URI` | MongoDB Connection string | Yes | `mongodb://localhost:27017/ServiceHub` |
-| `DB_NAME` | Database name | Yes | `ServiceHub_DB` |
-| `BETTER_AUTH_SECRET` | Secret key used by Better Auth | Yes | `yoursecretkeyhere` |
-| `BETTER_AUTH_URL` | Base URL for auth callbacks | Yes | `http://localhost:3000` |
-| `SERVER_URL` | Self URL for internal references | Yes | `http://localhost:8000` |
-| `CLIENT_URL` | Allowed CORS origin | Yes | `http://localhost:3000` |
-| `GOOGLE_CLIENT_ID` | OAuth Client ID | No | `googleclientid` |
-| `GOOGLE_SECRET_ID` | OAuth Secret | No | `googlesecretid` |
-| `UPSTASH_REDIS_REST_URL` | Redis URL | Yes | `https://your-upstash-url.upstash.io` |
-| `UPSTASH_REDIS_REST_TOKEN` | Redis Access Token | Yes | `your_redis_token` |
+---
 
-### Running the Server
+## 📜 License & Author
 
-```bash
-npm run dev
-```
-The server will start at `http://localhost:8000` (or the port defined in your environment).
+Distributed under the ISC License. Use it, break it, fix it, ship it.
 
-## Available Scripts
+<br>
 
-| Script | Description |
-| :--- | :--- |
-| `npm run dev` | Starts the server in watch mode using `tsx`. |
-| `npm run build` | Compiles the TypeScript code into the `dist/` directory. |
-| `npm run start` | Runs the compiled JavaScript server for production. |
-| `npm run test` | Placeholder for test suite. |
-
-## Deployment
-
-The application is structured for typical Node.js environments (like Render, Heroku, or a VPS). To deploy, ensure that `npm run build` is executed and `node dist/server.js` is set as the start command.
-
-## License & Author
-
-Distributed under the ISC License. 
-
-<img src="Assets/developer_Nur.jpeg" alt="Nur - Developer" width="150" style="border-radius: 50%" />
-
-**Author:** Nur  
-**GitHub:** [GitHub Profile](https://github.com/)  
-**LinkedIn:** [LinkedIn Profile](https://linkedin.com/)
+<div align="center">
+  <img src="Assets/developer_Nur.jpeg" alt="Nur - Developer" width="130" style="border-radius: 50%; border: 4px solid #47A248; padding: 3px; box-shadow: 0 0 15px rgba(71,162,72,0.5);" />
+  <br/>
+  <h3>Architected with ☕ and VS Code by Nur</h3>
+  <a href="https://github.com/Md-Nur-A-Alam">GitHub</a> • <a href="https://linkedin.com/">LinkedIn</a>
+</div>
