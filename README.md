@@ -123,19 +123,19 @@ A highly choreographed dance of requests, middlewares, and controllers.
 
 ```mermaid
 sequenceDiagram
-    participant C as 🌐 Client
-    participant E as 🚀 Express Server
-    participant B as 🔐 BetterAuth
-    participant DB as 🍃 MongoDB
+    participant C as Client
+    participant E as Express Server
+    participant B as BetterAuth
+    participant DB as MongoDB
 
-    C->>E: "Let me in!" (HTTP Request)
+    C->>E: HTTP Request
     Note over E: Helmet & CORS stand guard
-    E->>E: Check Rate Limits 🛑
-    E->>B: "Is this guy legit?"
-    B-->>E: "Yep, here's their session."
+    E->>E: Check Rate Limits
+    E->>B: Authenticate Request
+    B-->>E: Session Context
     E->>DB: Query / Mutation
     DB-->>E: Data Payload
-    E-->>C: 🎁 Standard JSON Response
+    E-->>C: Standard JSON Response
 ```
 
 ---
