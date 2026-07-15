@@ -200,5 +200,5 @@ Distributed under the ISC License. Use it, break it, fix it, ship it.
   <img src="Assets/developer_Nur.jpeg" alt="Nur - Developer" width="130" style="border-radius: 50%; border: 4px solid #47A248; padding: 3px; box-shadow: 0 0 15px rgba(71,162,72,0.5);" />
   <br/>
   <h3>Architected with ☕ and VS Code by Nur</h3>
-  <a href="https://github.com/Md-Nur-A-Alam">GitHub</a> • <a href="https://linkedin.com/">LinkedIn</a>
+  <a href="https://github.com/Md-Nur-A-Alam">GitHub</a> • <a href="https://www.linkedin.com/in/md-nur-a-alam13">LinkedIn</a>
 </div>
