@@ -243,10 +243,32 @@ export const getAuditLogs = async (req: Request, res: Response, next: NextFuncti
     const admins = await userHelper.findManyByIds(adminIds);
     const adminMap = new Map(admins.map((a: UserProfile) => [a.id, a]));
 
-    const formatted = logs.map((l: any) => ({
-      ...l,
-      admin: adminMap.get(l.adminId) || { name: "Unknown Admin", email: "" }
-    }));
+    // Fetch Targets (Users, Services)
+    const userTargetIds = Array.from(new Set(logs.filter((l: any) => l.targetType === "User").map((l: any) => l.targetId)));
+    const serviceTargetIds = Array.from(new Set(logs.filter((l: any) => l.targetType === "Service").map((l: any) => l.targetId)));
+    const bookingTargetIds = Array.from(new Set(logs.filter((l: any) => l.targetType === "Booking").map((l: any) => l.targetId)));
+
+    const targetUsers = await userHelper.findManyByIds(userTargetIds);
+    const targetUserMap = new Map(targetUsers.map((u: UserProfile) => [u.id, u.name]));
+
+    const targetServices = await Service.find({ _id: { $in: serviceTargetIds } }).select("title").lean();
+    const targetServiceMap = new Map(targetServices.map((s: any) => [s._id.toString(), s.title]));
+
+    const targetBookings = await Booking.find({ _id: { $in: bookingTargetIds } }).select("_id").lean();
+    const targetBookingMap = new Map(targetBookings.map((b: any) => [b._id.toString(), `Booking ${b._id.toString().substring(0,6)}`]));
+
+    const formatted = logs.map((l: any) => {
+      let targetName = l.targetId;
+      if (l.targetType === "User") targetName = targetUserMap.get(l.targetId) || l.targetId;
+      if (l.targetType === "Service") targetName = targetServiceMap.get(l.targetId) || l.targetId;
+      if (l.targetType === "Booking") targetName = targetBookingMap.get(l.targetId) || l.targetId;
+
+      return {
+        ...l,
+        targetName, // Pass the populated name to frontend
+        admin: adminMap.get(l.adminId) || { name: "Unknown Admin", email: "" }
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -295,6 +317,53 @@ export const getAdminUsers = async (req: Request, res: Response, next: NextFunct
     res.status(200).json({
       success: true,
       data: formatted
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/v1/admin/bookings
+export const getAdminBookings = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
+    const [bookings, total] = await Promise.all([
+      Booking.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Booking.countDocuments()
+    ]);
+
+    // Fetch User profiles for customer and provider
+    const userIds = Array.from(new Set([
+      ...bookings.map((b: any) => b.customerId),
+      ...bookings.map((b: any) => b.providerId)
+    ].filter(Boolean)));
+    const users = await userHelper.findManyByIds(userIds);
+    const userMap = new Map(users.map((u: UserProfile) => [u.id, u]));
+
+    // Fetch Service details
+    const serviceIds = Array.from(new Set(bookings.map((b: any) => b.serviceId).filter(Boolean)));
+    const services = await Service.find({ _id: { $in: serviceIds } }).select("title").lean();
+    const serviceMap = new Map(services.map((s: any) => [s._id.toString(), s.title]));
+
+    const formatted = bookings.map((b: any) => ({
+      ...b,
+      id: b._id,
+      customer: userMap.get(b.customerId) || { name: "Unknown", email: "" },
+      provider: userMap.get(b.providerId) || { name: "Unknown", email: "" },
+      serviceTitle: serviceMap.get(b.serviceId) || "Unknown Service"
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        items: formatted,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     next(error);

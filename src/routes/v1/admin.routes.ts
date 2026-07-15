@@ -6,6 +6,7 @@ import {
   getAuditLogs,
   getAdminServices,
   getAdminUsers,
+  getAdminBookings,
 } from "../../controllers/admin.controller";
 import { requireAuth } from "../../middlewares/auth.middleware";
 import { requireRole } from "../../middlewares/rbac.middleware";
@@ -22,5 +23,6 @@ router.patch("/users/:id/ban", banUser);
 router.get("/audit-log", getAuditLogs);
 router.get("/services", getAdminServices);
 router.get("/users", getAdminUsers);
+router.get("/bookings", getAdminBookings);
 
 export default router;

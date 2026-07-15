@@ -8,16 +8,19 @@ import { sendEmail } from "../services/email.service";
 
 import mongoose from "mongoose";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("CRITICAL: STRIPE_SECRET_KEY is not defined in the environment variables.");
-}
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  console.warn("WARNING: STRIPE_WEBHOOK_SECRET is not defined. Webhooks will fail verification.");
-}
+let stripeInstance: Stripe | null = null;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2026-06-24.dahlia" as any,
-});
+const getStripe = () => {
+  if (!stripeInstance) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("CRITICAL: STRIPE_SECRET_KEY is not defined in the environment variables.");
+    }
+    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-06-24.dahlia" as any,
+    });
+  }
+  return stripeInstance;
+};
 
 export const createPaymentIntent = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -44,6 +47,7 @@ export const createPaymentIntent = async (req: Request, res: Response): Promise<
     // Amount should be in cents
     const amount = Math.round(service.price * 100);
 
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
@@ -77,6 +81,7 @@ export const stripeWebhook = async (req: Request, res: Response): Promise<any> =
   let event: Stripe.Event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
   } catch (err: any) {
     console.error("Webhook signature verification failed:", err.message);
